@@ -13,6 +13,8 @@ type Props = {
   /** Was gerade bestätigt werden soll; null = Dialog ist zu */
   request: { title: string; description: string } | null
   confirmLabel?: string
+  /** Rot dargestellt, für Löschen/Entfernen */
+  destructive?: boolean
   onConfirm: () => void
   onCancel: () => void
 }
@@ -22,7 +24,13 @@ type Props = {
  * ausgeführt, wenn man ausdrücklich bestätigt. Abbrechen, Escape oder ein Klick daneben
  * verwerfen sie.
  */
-export function ConfirmDialog({ request, confirmLabel = 'Ändern', onConfirm, onCancel }: Props) {
+export function ConfirmDialog({
+  request,
+  confirmLabel = 'Ändern',
+  destructive = false,
+  onConfirm,
+  onCancel,
+}: Props) {
   return (
     <AlertDialog open={request !== null} onOpenChange={(open) => !open && onCancel()}>
       <AlertDialogContent>
@@ -32,7 +40,9 @@ export function ConfirmDialog({ request, confirmLabel = 'Ändern', onConfirm, on
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Abbrechen</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>{confirmLabel}</AlertDialogAction>
+          <AlertDialogAction variant={destructive ? 'destructive' : 'default'} onClick={onConfirm}>
+            {confirmLabel}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

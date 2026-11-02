@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import type { CategoryItem } from '@/hooks/use-admin-data'
@@ -17,6 +18,7 @@ export function CategoriesSection({ categories, onAdd, onRename, onDelete }: Pro
   const [editName, setEditName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<CategoryItem | null>(null)
 
   async function perform(action: () => Promise<string | null>) {
     setBusy(true)
@@ -40,12 +42,6 @@ export function CategoriesSection({ categories, onAdd, onRename, onDelete }: Pro
     if (!err) setEditingId(null)
   }
 
-  function handleDelete(category: CategoryItem) {
-    const ok = window.confirm(
-      `Kategorie „${category.name}“ löschen? Bestehende Tickets behalten ihren Inhalt, verlieren aber die Kategorie.`,
-    )
-    if (ok) perform(() => onDelete(category.id))
-  }
 
   return (
     <section className="space-y-3">
@@ -124,7 +120,7 @@ export function CategoriesSection({ categories, onAdd, onRename, onDelete }: Pro
                     variant="ghost"
                     size="icon"
                     disabled={busy}
-                    onClick={() => handleDelete(c)}
+                    onClick={() => setPendingDelete(c)}
                     aria-label={`${c.name} löschen`}
                   >
                     <Trash2 />
@@ -135,6 +131,22 @@ export function CategoriesSection({ categories, onAdd, onRename, onDelete }: Pro
           </li>
         ))}
       </ul>
+
+      <ConfirmDialog
+        destructive
+        confirmLabel="Löschen"
+        request={
+          pendingDelete && {
+            title: 'Kategorie löschen?',
+            description: `Kategorie „${pendingDelete.name}“ löschen? Bestehende Tickets behalten ihren Inhalt, verlieren aber die Kategorie.`,
+          }
+        }
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) perform(() => onDelete(pendingDelete.id))
+          setPendingDelete(null)
+        }}
+      />
     </section>
   )
 }

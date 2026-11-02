@@ -64,6 +64,7 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   // Rollenwechsel wird erst nach Rückfrage ausgeführt (eine falsche Rolle hat weitreichende Folgen)
+  const [pendingRemove, setPendingRemove] = useState<MemberItem | null>(null)
   const [pendingRole, setPendingRole] = useState<{ member: MemberItem; role: MemberRole } | null>(null)
 
   async function perform(action: () => Promise<string | null>) {
@@ -81,11 +82,6 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
     if (!err) setEmail('')
   }
 
-  function handleRemove(member: MemberItem) {
-    const name = member.profile?.full_name ?? 'diese Person'
-    if (!window.confirm(`${name} wirklich aus der Firma entfernen?`)) return
-    perform(() => onRemove(member.id))
-  }
 
   return (
     <section className="space-y-3">
@@ -145,7 +141,7 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
                     variant="ghost"
                     size="icon"
                     disabled={busy}
-                    onClick={() => handleRemove(m)}
+                    onClick={() => setPendingRemove(m)}
                     aria-label={`${m.profile?.full_name ?? 'Mitglied'} entfernen`}
                   >
                     <Trash2 />
@@ -156,6 +152,22 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDialog
+        destructive
+        confirmLabel="Entfernen"
+        request={
+          pendingRemove && {
+            title: 'Mitglied entfernen?',
+            description: `${pendingRemove.profile?.full_name ?? 'Diese Person'} verliert den Zugriff auf diese Firma. Das Konto selbst bleibt bestehen.`,
+          }
+        }
+        onCancel={() => setPendingRemove(null)}
+        onConfirm={() => {
+          if (pendingRemove) perform(() => onRemove(pendingRemove.id))
+          setPendingRemove(null)
+        }}
+      />
 
       <ConfirmDialog
         request={
