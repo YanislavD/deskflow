@@ -17,6 +17,10 @@ Die Startseite zeigt eine **Übersicht** (offene, überfällige und zugewiesene 
 Priorität). Übersicht, Ticketliste und Ticketdetails aktualisieren sich per **Realtime** automatisch, wenn jemand
 anderes etwas ändert – ohne die Seite neu zu laden. Welche Änderungen man bekommt, bestimmt weiterhin die RLS.
 
+**Einladungen:** Ein Admin erstellt unter „Verwaltung“ einen Einladungslink (7 Tage gültig, nur für die genannte
+E-Mail-Adresse). Die Person registriert sich oder meldet sich an und nimmt die Einladung an. In der Datenbank steht
+nur der Hash des Tokens, der Link wird deshalb nur einmal angezeigt.
+
 Eine Person kann Mitglied in mehreren Firmen sein (mit je eigener Rolle). Die aktive Firma wählt man oben im
 Kopfbereich; Tickets, „Neues Ticket“ und „Verwaltung“ arbeiten immer nur mit der gewählten Firma.
 

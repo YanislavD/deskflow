@@ -6,6 +6,7 @@ import { RequireMembership } from '@/components/require-membership'
 import { AdminPage } from '@/pages/admin-page'
 import { DashboardPage } from '@/pages/dashboard-page'
 import { ForgotPasswordPage } from '@/pages/forgot-password-page'
+import { InvitePage } from '@/pages/invite-page'
 import { LoginPage } from '@/pages/login-page'
 import { NewTicketPage } from '@/pages/new-ticket-page'
 import { NotFoundPage } from '@/pages/not-found-page'
@@ -30,6 +31,7 @@ function App() {
       {/* Ab hier nur angemeldet */}
       <Route element={<RequireAuth />}>
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/invite/:token" element={<InvitePage />} />
 
         {/* Ab hier zusätzlich: nur mit Firma */}
         <Route element={<RequireMembership />}>

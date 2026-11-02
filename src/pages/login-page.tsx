@@ -89,7 +89,7 @@ export function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Noch kein Konto?{' '}
-          <Link to="/register" className="text-primary hover:underline">
+          <Link to="/register" state={location.state} className="text-primary hover:underline">
             Registrieren
           </Link>
         </p>

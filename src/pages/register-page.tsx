@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useNavigate } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { LifeBuoy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,6 +10,9 @@ import { useAuth } from '@/lib/auth-context'
 export function RegisterPage() {
   const { session, loading, signUp } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  // Kam man von einem Einladungslink? Dann nach der Registrierung dorthin zurück.
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname ?? '/'
 
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -19,7 +22,7 @@ export function RegisterPage() {
   const [confirmationSent, setConfirmationSent] = useState(false)
 
   // Schon angemeldet? Dann gibt es hier nichts zu tun.
-  if (!loading && session) return <Navigate to="/" replace />
+  if (!loading && session) return <Navigate to={from} replace />
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -30,7 +33,7 @@ export function RegisterPage() {
 
     if (result.error) setError(result.error)
     else if (result.needsConfirmation) setConfirmationSent(true)
-    else navigate('/', { replace: true }) // angemeldet -> ohne Firma geht es zum Onboarding
+    else navigate(from, { replace: true }) // ohne Firma und ohne Einladung geht es zum Onboarding
   }
 
   return (
@@ -108,7 +111,7 @@ export function RegisterPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Schon ein Konto?{' '}
-          <Link to="/login" className="text-primary hover:underline">
+          <Link to="/login" state={location.state} className="text-primary hover:underline">
             Anmelden
           </Link>
         </p>
