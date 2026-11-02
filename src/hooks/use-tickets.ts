@@ -1,7 +1,24 @@
 import { useEffect, useState } from 'react'
 import { useMembership } from '@/hooks/use-membership'
+import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import type { TicketPriority, TicketStatus } from '@/lib/ticket-labels'
+
+export const PAGE_SIZE = 10
+
+export type TicketSort = 'number' | 'title' | 'status' | 'priority' | 'due_at'
+
+export type TicketQuery = {
+  q: string
+  status: TicketStatus | null
+  priority: TicketPriority | null
+  /** nur Tickets, die mir zugewiesen sind */
+  mine: boolean
+  sort: TicketSort
+  dir: 'asc' | 'desc'
+  /** 1-basiert */
+  page: number
+}
 
 export type TicketListItem = {
   id: string
@@ -14,49 +31,101 @@ export type TicketListItem = {
   assignee: { full_name: string | null } | null
 }
 
-type Result = { organizationId: string; tickets: TicketListItem[]; error: string | null }
+type Result = {
+  organizationId: string
+  key: string
+  tickets: TicketListItem[]
+  total: number
+  error: string | null
+}
 
 /**
- * Lädt die Tickets der gewählten Firma. Innerhalb der Firma filtern wir NICHT nach Rolle:
- * Die RLS-Policies in der Datenbank liefern jedem nur das, was er sehen darf
- * (Requester: eigene Tickets, Agent/Admin: alle der Firma).
+ * Sonderzeichen, die in der PostgREST-Filtersyntax (or=(a.ilike.*x*,b.eq.1)) etwas bedeuten,
+ * dürfen nicht im Suchtext landen – sonst könnte man den Filter "umbauen".
  */
-export function useTickets() {
+function sanitizeSearch(text: string) {
+  return text.replace(/[,()*%\\"]/g, ' ').trim()
+}
+
+/**
+ * Lädt eine Seite Tickets der gewählten Firma – Filtern, Sortieren und Blättern macht die
+ * Datenbank, nicht der Browser. Innerhalb der Firma filtern wir NICHT nach Rolle: Die
+ * RLS-Policies liefern jedem nur, was er sehen darf (Requester: eigene, Agent/Admin: alle).
+ */
+export function useTickets(query: TicketQuery) {
   const { organizationId } = useMembership()
+  const { user } = useAuth()
+  const userId = user?.id ?? null
   const [result, setResult] = useState<Result | null>(null)
+
+  // Ändert sich irgendein Parameter, ist das eine neue Anfrage
+  const key = JSON.stringify([organizationId, userId, query])
 
   useEffect(() => {
     if (!organizationId) return
     let cancelled = false
 
-    supabase
+    let request = supabase
       .from('tickets')
       .select(
         'id, number, title, status, priority, due_at, category:categories(name), assignee:profiles!assignee_id(full_name)',
+        { count: 'exact' },
       )
       .eq('organization_id', organizationId)
-      .order('number', { ascending: false })
-      .then(({ data, error }) => {
+
+    if (query.status) request = request.eq('status', query.status)
+    if (query.priority) request = request.eq('priority', query.priority)
+    if (query.mine && userId) request = request.eq('assignee_id', userId)
+
+    const term = sanitizeSearch(query.q)
+    if (term) {
+      const conditions = [`title.ilike.*${term}*`, `description.ilike.*${term}*`]
+      // "#12" oder "12" findet auch die Ticketnummer
+      const numberMatch = /^#?(\d{1,9})$/.exec(term)
+      if (numberMatch) conditions.push(`number.eq.${numberMatch[1]}`)
+      request = request.or(conditions.join(','))
+    }
+
+    // Status/Priorität sortieren nach der Reihenfolge im Enum (z. B. niedrig < mittel < hoch)
+    request = request.order(query.sort, { ascending: query.dir === 'asc', nullsFirst: false })
+    if (query.sort !== 'number') request = request.order('number', { ascending: false })
+
+    const fetchPage = (from: number) => request.range(from, from + PAGE_SIZE - 1)
+
+    fetchPage((query.page - 1) * PAGE_SIZE)
+      .then(async (response) => {
+        // PGRST103: Die Seite liegt hinter dem Ende (z. B. alte URL). Wir laden dann Seite 1,
+        // um die Gesamtzahl zu kennen – die Seite springt anschließend auf die letzte Seite.
+        if (response.error?.code === 'PGRST103') return fetchPage(0)
+        return response
+      })
+      .then(({ data, count, error }) => {
         if (cancelled) return
         setResult({
           organizationId,
+          key,
           tickets: data ?? [],
+          total: count ?? 0,
           error: error ? 'Die Tickets konnten nicht geladen werden.' : null,
         })
       })
 
-    // Wechselt die Firma, bevor die Antwort kommt, ignorieren wir sie.
+    // Kommt vorher eine neuere Anfrage (z. B. weitergetippt), ignorieren wir diese Antwort.
     return () => {
       cancelled = true
     }
-  }, [organizationId])
+  }, [organizationId, userId, key, query])
 
-  // Ergebnis einer anderen Firma gilt nicht -> "lädt", bis die neue da ist
-  const current = result?.organizationId === organizationId ? result : null
+  // Antworten einer anderen Firma gelten nicht
+  const data = result?.organizationId === organizationId ? result : null
 
   return {
-    tickets: current?.tickets ?? [],
-    loading: organizationId !== null && current === null,
-    error: current?.error ?? null,
+    tickets: data?.tickets ?? [],
+    total: data?.total ?? 0,
+    error: data?.error ?? null,
+    /** noch gar keine Daten (erste Ladung oder Firmenwechsel) */
+    loading: organizationId !== null && data === null,
+    /** es sind Daten da, aber die neue Anfrage läuft noch (alte Zeilen bleiben so lange sichtbar) */
+    fetching: data !== null && data.key !== key,
   }
 }

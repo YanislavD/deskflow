@@ -1,6 +1,8 @@
 import { Search, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -22,6 +24,7 @@ export type TicketFilterValues = {
   q: string
   status: TicketStatus | typeof ALL
   priority: TicketPriority | typeof ALL
+  mine: boolean
 }
 
 type Props = {
@@ -29,9 +32,11 @@ type Props = {
   onChange: (patch: Partial<TicketFilterValues>) => void
   onReset: () => void
   isActive: boolean
+  /** "Mir zugewiesen" gibt es nur für Agents/Admins (Requester sehen ohnehin nur ihre Tickets) */
+  showMine: boolean
 }
 
-export function TicketFilters({ values, onChange, onReset, isActive }: Props) {
+export function TicketFilters({ values, onChange, onReset, isActive, showMine }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative min-w-52 flex-1">
@@ -43,7 +48,7 @@ export function TicketFilters({ values, onChange, onReset, isActive }: Props) {
           type="search"
           value={values.q}
           onChange={(e) => onChange({ q: e.target.value })}
-          placeholder="Suchen nach Titel, Nummer, Kategorie …"
+          placeholder="Suchen in Titel und Beschreibung, oder #Nummer"
           aria-label="Tickets durchsuchen"
           className="pl-8"
         />
@@ -82,6 +87,19 @@ export function TicketFilters({ values, onChange, onReset, isActive }: Props) {
           ))}
         </SelectContent>
       </Select>
+
+      {showMine && (
+        <div className="flex items-center gap-2 px-1">
+          <Checkbox
+            id="filter-mine"
+            checked={values.mine}
+            onCheckedChange={(checked) => onChange({ mine: checked === true })}
+          />
+          <Label htmlFor="filter-mine" className="text-sm font-normal">
+            Mir zugewiesen
+          </Label>
+        </div>
+      )}
 
       {isActive && (
         <Button variant="ghost" size="sm" onClick={onReset}>
