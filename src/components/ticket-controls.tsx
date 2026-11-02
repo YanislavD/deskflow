@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -29,6 +30,16 @@ export function TicketControls({ ticket, staff, onUpdate }: Props) {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Jede Änderung wird erst nach einer Rückfrage ausgeführt (Schutz vor Fehlklicks)
+  const [pending, setPending] = useState<{
+    patch: TicketPatch
+    title: string
+    description: string
+  } | null>(null)
+
+  const ask = (patch: TicketPatch, title: string, description: string) =>
+    setPending({ patch, title, description })
+
   async function change(patch: TicketPatch) {
     setSaving(true)
     setError(null)
@@ -44,7 +55,13 @@ export function TicketControls({ ticket, staff, onUpdate }: Props) {
           <Label htmlFor="status">Status</Label>
           <Select
             value={ticket.status}
-            onValueChange={(v) => change({ status: v as TicketStatus })}
+            onValueChange={(v) =>
+              ask(
+                { status: v as TicketStatus },
+                'Status ändern?',
+                `Status von „${statusLabels[ticket.status]}“ auf „${statusLabels[v as TicketStatus]}“ ändern?`,
+              )
+            }
             disabled={saving}
           >
             <SelectTrigger id="status" className="w-full">
@@ -64,7 +81,13 @@ export function TicketControls({ ticket, staff, onUpdate }: Props) {
           <Label htmlFor="priority">Priorität</Label>
           <Select
             value={ticket.priority}
-            onValueChange={(v) => change({ priority: v as TicketPriority })}
+            onValueChange={(v) =>
+              ask(
+                { priority: v as TicketPriority },
+                'Priorität ändern?',
+                `Priorität von „${priorityLabels[ticket.priority]}“ auf „${priorityLabels[v as TicketPriority]}“ ändern?`,
+              )
+            }
             disabled={saving}
           >
             <SelectTrigger id="priority" className="w-full">
@@ -84,7 +107,14 @@ export function TicketControls({ ticket, staff, onUpdate }: Props) {
           <Label htmlFor="assignee">Zuständig</Label>
           <Select
             value={ticket.assignee_id ?? NOBODY}
-            onValueChange={(v) => change({ assignee_id: v === NOBODY ? null : v })}
+            onValueChange={(v) => {
+              const newName = v === NOBODY ? 'niemand' : (staff.find((s) => s.id === v)?.name ?? 'Unbekannt')
+              ask(
+                { assignee_id: v === NOBODY ? null : v },
+                'Zuständigkeit ändern?',
+                `Zuständigkeit von „${ticket.assignee?.full_name ?? 'niemand'}“ auf „${newName}“ ändern?`,
+              )
+            }}
             disabled={saving}
           >
             <SelectTrigger id="assignee" className="w-full">
@@ -107,6 +137,15 @@ export function TicketControls({ ticket, staff, onUpdate }: Props) {
           {error}
         </p>
       )}
+
+      <ConfirmDialog
+        request={pending}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending) change(pending.patch)
+          setPending(null)
+        }}
+      />
     </div>
   )
 }

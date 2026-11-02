@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Trash2, UserPlus } from 'lucide-react'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -62,6 +63,8 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
   const [role, setRole] = useState<MemberRole>('requester')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  // Rollenwechsel wird erst nach Rückfrage ausgeführt (eine falsche Rolle hat weitreichende Folgen)
+  const [pendingRole, setPendingRole] = useState<{ member: MemberItem; role: MemberRole } | null>(null)
 
   async function perform(action: () => Promise<string | null>) {
     setBusy(true)
@@ -133,7 +136,7 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
                   <RoleSelect
                     value={m.role}
                     label={`Rolle von ${m.profile?.full_name ?? 'Mitglied'}`}
-                    onChange={(r) => perform(() => onChangeRole(m.id, r))}
+                    onChange={(r) => setPendingRole({ member: m, role: r })}
                   />
                 </TableCell>
                 <TableCell className="text-muted-foreground">{formatDate(m.created_at)}</TableCell>
@@ -153,6 +156,20 @@ export function MembersSection({ members, onAdd, onChangeRole, onRemove }: Props
           </TableBody>
         </Table>
       </div>
+
+      <ConfirmDialog
+        request={
+          pendingRole && {
+            title: 'Rolle ändern?',
+            description: `Rolle von ${pendingRole.member.profile?.full_name ?? 'diesem Mitglied'} von „${roleLabels[pendingRole.member.role]}“ auf „${roleLabels[pendingRole.role]}“ ändern?`,
+          }
+        }
+        onCancel={() => setPendingRole(null)}
+        onConfirm={() => {
+          if (pendingRole) perform(() => onChangeRole(pendingRole.member.id, pendingRole.role))
+          setPendingRole(null)
+        }}
+      />
     </section>
   )
 }
