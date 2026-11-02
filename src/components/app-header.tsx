@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from 'react-router'
 import { Building2, LifeBuoy, LogOut } from 'lucide-react'
+import { NotificationsBell } from '@/components/notifications-bell'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -96,6 +97,7 @@ export function AppHeader() {
               </span>
             )
           )}
+          <NotificationsBell />
           <NavLink to="/profile" className={navClass('hidden md:inline')}>
             {name ?? user?.email}
           </NavLink>

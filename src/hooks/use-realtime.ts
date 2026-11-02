@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase'
 
 type Options = {
-  table: 'tickets' | 'ticket_comments' | 'ticket_events'
+  table: 'tickets' | 'ticket_comments' | 'ticket_events' | 'notifications'
   /** Nur Änderungen, die dazu passen, z. B. "organization_id=eq.<uuid>" */
   filter?: string
   enabled?: boolean

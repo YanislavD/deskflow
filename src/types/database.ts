@@ -90,6 +90,65 @@ export type Database = {
           },
         ];
       };
+      notifications: {
+        Row: {
+          actor_id: string | null;
+          created_at: string;
+          detail: string | null;
+          id: string;
+          organization_id: string;
+          read_at: string | null;
+          ticket_id: string;
+          type: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          actor_id?: string | null;
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          organization_id: string;
+          read_at?: string | null;
+          ticket_id: string;
+          type: string;
+          user_id: string;
+        };
+        Update: {
+          actor_id?: string | null;
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          organization_id?: string;
+          read_at?: string | null;
+          ticket_id?: string;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_organization_id_ticket_id_fkey";
+            columns: ["organization_id", "ticket_id"];
+            isOneToOne: false;
+            referencedRelation: "tickets";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       organizations: {
         Row: {
           created_at: string;
