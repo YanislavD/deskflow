@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useTicketDetail } from '@/hooks/use-ticket-detail'
+import { useReplyTemplates } from '@/hooks/use-templates'
 import { formatDate, formatDateTime } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +39,8 @@ export function TicketDetailPage() {
     updateTicket,
   } = useTicketDetail(id)
   const [editing, setEditing] = useState(false)
+  // Vorlagen nur für Agents/Admins laden (Requester sehen sie ohnehin nicht)
+  const { templates } = useReplyTemplates(isStaff ? (ticket?.organization_id ?? null) : null)
 
   const backLink = (
     <Link
@@ -157,7 +160,7 @@ export function TicketDetailPage() {
           </Card>
         ))}
 
-        <CommentForm canWriteInternal={isStaff} onSubmit={addComment} />
+        <CommentForm canWriteInternal={isStaff} onSubmit={addComment} templates={templates} />
       </section>
 
       <section className="space-y-3">

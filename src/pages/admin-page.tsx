@@ -1,11 +1,14 @@
 import { CategoriesSection } from '@/components/categories-section'
 import { MembersSection } from '@/components/members-section'
+import { TemplatesSection } from '@/components/templates-section'
 import { useAdminData } from '@/hooks/use-admin-data'
 import { useMembership } from '@/hooks/use-membership'
+import { useReplyTemplates } from '@/hooks/use-templates'
 
 export function AdminPage() {
   const { organizationId } = useMembership()
   const admin = useAdminData(organizationId)
+  const templates = useReplyTemplates(organizationId)
 
   return (
     <div className="space-y-8">
@@ -32,6 +35,12 @@ export function AdminPage() {
             onAdd={admin.addCategory}
             onRename={admin.renameCategory}
             onDelete={admin.deleteCategory}
+          />
+          <TemplatesSection
+            templates={templates.templates}
+            onAdd={templates.add}
+            onUpdate={templates.update}
+            onRemove={templates.remove}
           />
         </>
       )}
