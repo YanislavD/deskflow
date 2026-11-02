@@ -13,6 +13,9 @@ Jede Firma (Organisation) hat ihre eigenen Nutzer, Kategorien und Tickets – un
 | `agent`     | alle Tickets der Firma ansehen und bearbeiten, interne Notizen schreiben              |
 | `admin`     | wie `agent` + Kategorien und Mitglieder verwalten, Tickets löschen, Firma umbenennen  |
 
+Eine Person kann Mitglied in mehreren Firmen sein (mit je eigener Rolle). Die aktive Firma wählt man oben im
+Kopfbereich; Tickets, „Neues Ticket“ und „Verwaltung“ arbeiten immer nur mit der gewählten Firma.
+
 ## Tech-Stack
 
 - [React](https://react.dev) + [Vite](https://vite.dev) + TypeScript

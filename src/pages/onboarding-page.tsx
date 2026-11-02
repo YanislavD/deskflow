@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useMembership } from '@/hooks/use-membership'
 import { useAuth } from '@/lib/auth-context'
+import { useOrganization } from '@/lib/organization-context'
 import { supabase } from '@/lib/supabase'
 
 function translateError(message: string) {
@@ -19,6 +20,7 @@ function translateError(message: string) {
 export function OnboardingPage() {
   const { signOut } = useAuth()
   const { organizationId, loading } = useMembership()
+  const { reload } = useOrganization()
   const navigate = useNavigate()
 
   const [name, setName] = useState('')
@@ -33,11 +35,21 @@ export function OnboardingPage() {
     e.preventDefault()
     setError(null)
     setSubmitting(true)
-    const { error } = await supabase.rpc('create_organization', { org_name: name })
-    setSubmitting(false)
+    const { data: newOrganizationId, error } = await supabase.rpc('create_organization', {
+      org_name: name,
+    })
 
-    if (error) setError(translateError(error.message))
-    else navigate('/', { replace: true })
+    if (error) {
+      setSubmitting(false)
+      setError(translateError(error.message))
+      return
+    }
+
+    // Mitgliedschaften neu laden und die neue Firma auswählen, sonst schickt uns
+    // RequireMembership sofort wieder hierher zurück.
+    await reload(newOrganizationId)
+    setSubmitting(false)
+    navigate('/', { replace: true })
   }
 
   return (

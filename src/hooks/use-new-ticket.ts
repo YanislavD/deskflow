@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/auth-context'
+import { useMembership } from '@/hooks/use-membership'
 import { supabase } from '@/lib/supabase'
 import type { TicketPriority } from '@/lib/ticket-labels'
 
@@ -12,54 +12,36 @@ export type NewTicketInput = {
   priority: TicketPriority
 }
 
-/**
- * Daten für das Formular "Neues Ticket": in welcher Firma legt der Nutzer an,
- * und welche Kategorien gibt es dort?
- *
- * Hinweis: Wir nehmen die erste Mitgliedschaft des Nutzers. Wer in mehreren Firmen
- * Mitglied ist, bräuchte später eine Firmenauswahl.
- */
+/** Daten für das Formular "Neues Ticket": die Kategorien der gewählten Firma. */
 export function useNewTicket() {
-  const { user } = useAuth()
-  const [organizationId, setOrganizationId] = useState<string | null>(null)
-  const [categories, setCategories] = useState<CategoryOption[]>([])
-  const [loading, setLoading] = useState(true)
+  const { organizationId } = useMembership()
+  const [loaded, setLoaded] = useState<{
+    organizationId: string
+    categories: CategoryOption[]
+  } | null>(null)
 
   useEffect(() => {
-    if (!user) return
+    if (!organizationId) return
     let cancelled = false
 
-    async function load() {
-      const { data: membership } = await supabase
-        .from('memberships')
-        .select('organization_id')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-      if (cancelled) return
+    supabase
+      .from('categories')
+      .select('id, name')
+      .eq('organization_id', organizationId)
+      .order('name')
+      .then(({ data }) => {
+        if (!cancelled) setLoaded({ organizationId, categories: data ?? [] })
+      })
 
-      if (membership) {
-        const { data: cats } = await supabase
-          .from('categories')
-          .select('id, name')
-          .eq('organization_id', membership.organization_id)
-          .order('name')
-        if (cancelled) return
-        setOrganizationId(membership.organization_id)
-        setCategories(cats ?? [])
-      }
-      setLoading(false)
-    }
-
-    load()
     return () => {
       cancelled = true
     }
-  }, [user])
+  }, [organizationId])
+
+  const current = loaded?.organizationId === organizationId ? loaded : null
 
   /**
-   * Legt das Ticket an. Gesendet werden nur die Felder des Formulars:
+   * Legt das Ticket in der gewählten Firma an. Gesendet werden nur die Felder des Formulars:
    * - number: vergibt der Datenbank-Trigger
    * - requester_id: Standardwert in der DB ist der angemeldete Nutzer
    * - status: Standardwert "neu"
@@ -84,5 +66,10 @@ export function useNewTicket() {
     return { id: data.id, error: null }
   }
 
-  return { categories, loading, hasOrganization: organizationId !== null, createTicket }
+  return {
+    categories: current?.categories ?? [],
+    loading: organizationId !== null && current === null,
+    hasOrganization: organizationId !== null,
+    createTicket,
+  }
 }

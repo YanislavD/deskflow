@@ -1,40 +1,15 @@
-import { useEffect, useState } from 'react'
-import { useAuth } from '@/lib/auth-context'
-import { supabase } from '@/lib/supabase'
-import type { MemberRole } from '@/lib/role-labels'
+import { useOrganization } from '@/lib/organization-context'
 
 /**
- * In welcher Firma ist der Nutzer und mit welcher Rolle?
- * (Es wird die erste Mitgliedschaft genommen – eine Firmenauswahl gibt es noch nicht.)
+ * In welcher Firma arbeitet der Nutzer gerade und mit welcher Rolle?
+ * (Die Firma wählt man oben im Kopfbereich; die Daten kommen aus dem OrganizationProvider.)
  */
 export function useMembership() {
-  const { user } = useAuth()
-  const [organizationId, setOrganizationId] = useState<string | null>(null)
-  const [role, setRole] = useState<MemberRole | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    if (!user) return
-    let cancelled = false
-
-    supabase
-      .from('memberships')
-      .select('organization_id, role')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (cancelled) return
-        setOrganizationId(data?.organization_id ?? null)
-        setRole(data?.role ?? null)
-        setLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [user])
-
-  return { organizationId, role, isAdmin: role === 'admin', loading }
+  const { current, loading } = useOrganization()
+  return {
+    organizationId: current?.id ?? null,
+    role: current?.role ?? null,
+    isAdmin: current?.role === 'admin',
+    loading,
+  }
 }
