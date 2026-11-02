@@ -71,7 +71,7 @@ export function TicketFilters({ values, onChange, onReset, isActive, isStaff }: 
           type="search"
           value={values.q}
           onChange={(e) => onChange({ q: e.target.value })}
-          placeholder="Suchen in Titel und Beschreibung, oder #Nummer"
+          placeholder="Suchen (Titel, Text, #Nummer)"
           aria-label="Tickets durchsuchen"
           className="pl-8"
         />
