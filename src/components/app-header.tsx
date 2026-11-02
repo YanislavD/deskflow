@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { Building2, LifeBuoy, LogOut } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -10,9 +9,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useMembership } from '@/hooks/use-membership'
+import { useProfileName } from '@/hooks/use-profile'
 import { useAuth } from '@/lib/auth-context'
 import { organizationLabel, useOrganization } from '@/lib/organization-context'
-import { supabase } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
@@ -23,17 +22,7 @@ export function AppHeader() {
   const { isAdmin } = useMembership()
   const { organizations, current, select } = useOrganization()
   const navigate = useNavigate()
-  const [name, setName] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!user) return
-    supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => setName(data?.full_name ?? null))
-  }, [user])
+  const name = useProfileName()
 
   return (
     <header className="border-b bg-card">
@@ -87,9 +76,9 @@ export function AppHeader() {
               </span>
             )
           )}
-          <span className="hidden text-sm text-muted-foreground md:inline">
+          <NavLink to="/profile" className={cn(navClass, 'hidden md:inline')}>
             {name ?? user?.email}
-          </span>
+          </NavLink>
           <Button variant="outline" size="sm" onClick={signOut}>
             <LogOut /> Abmelden
           </Button>
