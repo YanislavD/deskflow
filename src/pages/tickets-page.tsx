@@ -1,6 +1,14 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Plus,
+} from 'lucide-react'
 import { PriorityBadge, StatusBadge } from '@/components/ticket-badges'
 import { ALL, TicketFilters, type TicketFilterValues } from '@/components/ticket-filters'
 import { Button } from '@/components/ui/button'
@@ -21,6 +29,8 @@ import {
   type TicketQuery,
   type TicketSort,
 } from '@/hooks/use-tickets'
+import { useAuth } from '@/lib/auth-context'
+import { exportTickets } from '@/lib/export-tickets'
 import { formatDate } from '@/lib/format'
 import { priorityLabels, statusLabels } from '@/lib/ticket-labels'
 import { cn } from '@/lib/utils'
@@ -82,7 +92,8 @@ function SortHeader({
 }
 
 export function TicketsPage() {
-  const { role } = useMembership()
+  const { role, organizationId } = useMembership()
+  const { user } = useAuth()
   const showMine = role === 'admin' || role === 'agent'
 
   // Alle Einstellungen stehen in der URL (?q=vpn&status=neu&sort=priority&page=2):
@@ -176,6 +187,25 @@ export function TicketsPage() {
   )
 
   const { tickets, total, loading, fetching, error } = useTickets(query)
+
+  // Export: alle Tickets, die zu den aktuellen Filtern passen (nicht nur die sichtbare Seite)
+  const [exporting, setExporting] = useState(false)
+  const [exportMessage, setExportMessage] = useState<string | null>(null)
+
+  async function handleExport() {
+    if (!organizationId) return
+    setExporting(true)
+    setExportMessage(null)
+    const result = await exportTickets(query, organizationId, user?.id ?? null)
+    setExporting(false)
+    if (result.error) setExportMessage(result.error)
+    else
+      setExportMessage(
+        result.truncated
+          ? `${result.count} Tickets exportiert (Höchstgrenze erreicht – bitte Filter verwenden).`
+          : `${result.count} ${result.count === 1 ? 'Ticket' : 'Tickets'} exportiert.`,
+      )
+  }
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const ready = !loading && !error
 
@@ -202,12 +232,28 @@ export function TicketsPage() {
             </span>
           )}
         </div>
-        <Button asChild size="sm">
-          <Link to="/tickets/new">
-            <Plus /> Neues Ticket
-          </Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+            disabled={exporting || !ready || total === 0}
+          >
+            <Download /> {exporting ? 'Exportiert …' : 'CSV'}
+          </Button>
+          <Button asChild size="sm">
+            <Link to="/tickets/new">
+              <Plus /> Neues Ticket
+            </Link>
+          </Button>
+        </div>
       </div>
+
+      {exportMessage && (
+        <p role="status" className="text-sm text-muted-foreground">
+          {exportMessage}
+        </p>
+      )}
 
       <TicketFilters
         values={filters}

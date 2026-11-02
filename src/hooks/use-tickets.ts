@@ -53,6 +53,48 @@ function sanitizeSearch(text: string) {
 }
 
 /**
+ * Wendet Suche und Filter auf eine Ticket-Abfrage an. Wird von der Liste UND vom CSV-Export
+ * genutzt, damit beide immer dieselben Tickets meinen.
+ *
+ * (Die Builder-Typen von supabase-js sind sehr lang. Hier brauchen wir nur die Filtermethoden,
+ * deshalb arbeiten wir intern ohne genaue Typen und geben denselben Typ zurück.)
+ */
+export function applyTicketFilters<T>(builder: T, query: TicketQuery, userId: string | null): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let request = builder as any
+
+  if (query.status) request = request.eq('status', query.status)
+  if (query.priority) request = request.eq('priority', query.priority)
+  if (query.mine && userId) request = request.eq('assignee_id', userId)
+  if (query.unassigned) request = request.is('assignee_id', null)
+  if (query.overdue) {
+    request = request
+      .lt('due_at', new Date().toISOString())
+      .not('status', 'in', '(geloest,geschlossen)')
+  }
+
+  const term = sanitizeSearch(query.q)
+  if (term) {
+    const conditions = [`title.ilike.*${term}*`, `description.ilike.*${term}*`]
+    // "#12" oder "12" findet auch die Ticketnummer
+    const numberMatch = /^#?(\d{1,9})$/.exec(term)
+    if (numberMatch) conditions.push(`number.eq.${numberMatch[1]}`)
+    request = request.or(conditions.join(','))
+  }
+
+  return request as T
+}
+
+/** Sortierung: Status/Priorität nach der Reihenfolge im Enum (z. B. niedrig < mittel < hoch). */
+export function applyTicketSort<T>(builder: T, query: TicketQuery): T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let request = builder as any
+  request = request.order(query.sort, { ascending: query.dir === 'asc', nullsFirst: false })
+  if (query.sort !== 'number') request = request.order('number', { ascending: false })
+  return request as T
+}
+
+/**
  * Lädt eine Seite Tickets der gewählten Firma – Filtern, Sortieren und Blättern macht die
  * Datenbank, nicht der Browser. Innerhalb der Firma filtern wir NICHT nach Rolle: Die
  * RLS-Policies liefern jedem nur, was er sehen darf (Requester: eigene, Agent/Admin: alle).
@@ -90,28 +132,9 @@ export function useTickets(query: TicketQuery) {
       )
       .eq('organization_id', organizationId)
 
-    if (query.status) request = request.eq('status', query.status)
-    if (query.priority) request = request.eq('priority', query.priority)
-    if (query.mine && userId) request = request.eq('assignee_id', userId)
-    if (query.unassigned) request = request.is('assignee_id', null)
-    if (query.overdue) {
-      request = request
-        .lt('due_at', new Date().toISOString())
-        .not('status', 'in', '(geloest,geschlossen)')
-    }
+    request = applyTicketFilters(request, query, userId)
 
-    const term = sanitizeSearch(query.q)
-    if (term) {
-      const conditions = [`title.ilike.*${term}*`, `description.ilike.*${term}*`]
-      // "#12" oder "12" findet auch die Ticketnummer
-      const numberMatch = /^#?(\d{1,9})$/.exec(term)
-      if (numberMatch) conditions.push(`number.eq.${numberMatch[1]}`)
-      request = request.or(conditions.join(','))
-    }
-
-    // Status/Priorität sortieren nach der Reihenfolge im Enum (z. B. niedrig < mittel < hoch)
-    request = request.order(query.sort, { ascending: query.dir === 'asc', nullsFirst: false })
-    if (query.sort !== 'number') request = request.order('number', { ascending: false })
+    request = applyTicketSort(request, query)
 
     const fetchPage = (from: number) => request.range(from, from + PAGE_SIZE - 1)
 
