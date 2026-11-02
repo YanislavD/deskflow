@@ -163,3 +163,14 @@ insert into public.ticket_comments (ticket_id, organization_id, author_id, body,
    'b0000000-0000-4000-8000-000000000002',
    'Passwort wurde zurückgesetzt, das temporäre Passwort habe ich dir per Telefon durchgegeben.',
    false, now() - interval '1 day');
+
+-- E-Mail-Benachrichtigungen (nur lokal) ---------------------------------------------------------------------
+-- Wohin die Datenbank die Edge Function "send-emails" ruft (Docker-Containername, siehe README)
+-- und welche Adresse die App in den E-Mails verlinkt. Das Geheimnis muss mit
+-- EMAIL_WEBHOOK_SECRET in supabase/functions/.env übereinstimmen.
+
+insert into private.app_settings (key, value) values
+  ('app_url', 'http://localhost:5173'),
+  ('email_sender_url', 'http://supabase_edge_runtime_deskflow:8081/send-emails'),
+  ('email_sender_secret', 'local-dev-secret')
+on conflict (key) do update set value = excluded.value;

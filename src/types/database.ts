@@ -50,6 +50,54 @@ export type Database = {
           },
         ];
       };
+      email_outbox: {
+        Row: {
+          attempts: number;
+          body: string;
+          claimed_at: string | null;
+          created_at: string;
+          id: string;
+          last_error: string | null;
+          sent_at: string | null;
+          subject: string;
+          to_email: string;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          attempts?: number;
+          body: string;
+          claimed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          last_error?: string | null;
+          sent_at?: string | null;
+          subject: string;
+          to_email: string;
+          user_id?: string | null;
+        };
+        Update: {
+          attempts?: number;
+          body?: string;
+          claimed_at?: string | null;
+          created_at?: string;
+          id?: string;
+          last_error?: string | null;
+          sent_at?: string | null;
+          subject?: string;
+          to_email?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "email_outbox_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       invitations: {
         Row: {
           accepted_at: string | null;
@@ -237,6 +285,7 @@ export type Database = {
         Row: {
           avatar_url: string | null;
           created_at: string;
+          email_notifications: boolean;
           full_name: string | null;
           id: string;
         };
@@ -244,12 +293,14 @@ export type Database = {
         Insert: {
           avatar_url?: string | null;
           created_at?: string;
+          email_notifications?: boolean;
           full_name?: string | null;
           id: string;
         };
         Update: {
           avatar_url?: string | null;
           created_at?: string;
+          email_notifications?: boolean;
           full_name?: string | null;
           id?: string;
         };
@@ -564,6 +615,27 @@ export type Database = {
           org: string;
         };
         Returns: string;
+      };
+      claim_outbox_emails: {
+        Args: { batch?: number };
+        Returns: {
+          attempts: number;
+          body: string;
+          claimed_at: string | null;
+          created_at: string;
+          id: string;
+          last_error: string | null;
+          sent_at: string | null;
+          subject: string;
+          to_email: string;
+          user_id: string | null;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "email_outbox";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
       };
       create_invitation: {
         Args: {

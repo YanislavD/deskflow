@@ -92,6 +92,33 @@ einem Agent und zwei Requestern sowie 8 Tickets. Die Logins und das Test-Passwor
 - **Lint und Build** des Frontends
 - **Datenbank-Tests (pgTAP)** gegen eine lokale Supabase im Container (`supabase test db`)
 
+## E-Mail-Benachrichtigungen
+
+Zusätzlich zur Glocke in der App können Nutzer E-Mails bekommen (Profil → „Per E-Mail benachrichtigen“, standardmäßig an).
+Die E-Mail enthält Ticketnummer, Titel, wer etwas getan hat und einen Link – **nicht** den Text von Kommentaren.
+
+So läuft es:
+
+1. Ein Datenbank-Trigger legt für jede Benachrichtigung eine E-Mail in der Warteschlange `email_outbox` ab.
+2. Ein zweiter Trigger weckt per `pg_net` die Edge Function `send-emails`.
+3. Die Funktion holt die offenen E-Mails ab (`claim_outbox_emails`, damit nichts doppelt verschickt wird), sendet sie per
+   SMTP und markiert sie. Schlägt etwas fehl, bleibt die E-Mail in der Warteschlange (bis zu 5 Versuche).
+
+**Lokal** (Mailpit fängt die E-Mails ab, Ansicht auf http://127.0.0.1:54324):
+
+```bash
+cp supabase/functions/.env.example supabase/functions/.env
+npx supabase stop && npx supabase start     # liest die .env der Funktion ein
+```
+
+`supabase/seed.sql` trägt die Adresse der Funktion in `private.app_settings` ein (`npx supabase db reset`).
+Änderungen an `supabase/functions/.env` werden erst nach einem Neustart von Supabase wirksam.
+
+**In der Cloud** (später): Funktion mit `npx supabase functions deploy send-emails` veröffentlichen, SMTP-Zugangsdaten
+mit `npx supabase secrets set --env-file supabase/functions/.env` hinterlegen (mit echtem SMTP-Anbieter, `SMTP_TLS`
+und `SMTP_USER`/`SMTP_PASS`), und die drei Einträge in `private.app_settings` per SQL setzen
+(`app_url`, `email_sender_url`, `email_sender_secret`).
+
 ## Skripte
 
 | Befehl            | Beschreibung                  |

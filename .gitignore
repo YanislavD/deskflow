@@ -31,3 +31,6 @@ dist-ssr
 # Supabase CLI
 supabase/.branches
 supabase/.temp
+
+# Edge-Function-Geheimnisse (lokal)
+supabase/functions/.env

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -80,6 +81,74 @@ function NameForm() {
         {saving ? 'Wird gespeichert …' : 'Speichern'}
       </Button>
     </form>
+  )
+}
+
+function EmailPreference() {
+  const { user } = useAuth()
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => {
+    if (!user) return
+    let cancelled = false
+    supabase
+      .from('profiles')
+      .select('email_notifications')
+      .eq('id', user.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled) setEnabled(data?.email_notifications ?? true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
+  async function change(next: boolean) {
+    if (!user) return
+    setMessage(null)
+    const { data, error } = await supabase
+      .from('profiles')
+      .update({ email_notifications: next })
+      .eq('id', user.id)
+      .select('id')
+
+    if (error || !data || data.length === 0) {
+      setMessage({ ok: false, text: 'Die Einstellung konnte nicht gespeichert werden.' })
+    } else {
+      setEnabled(next)
+      setMessage({ ok: true, text: 'Gespeichert.' })
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-start gap-3">
+        <Checkbox
+          id="email-notifications"
+          checked={enabled ?? false}
+          disabled={enabled === null}
+          onCheckedChange={(checked) => change(checked === true)}
+          className="mt-0.5"
+        />
+        <Label htmlFor="email-notifications" className="flex-col items-start gap-0.5 font-normal">
+          <span className="text-sm">Per E-Mail benachrichtigen</span>
+          <span className="text-xs text-muted-foreground">
+            Du bekommst eine E-Mail bei neuen Kommentaren, Zuweisungen und Statuswechseln. Den Text
+            von Kommentaren enthält sie nicht, nur einen Link zum Ticket.
+          </span>
+        </Label>
+      </div>
+      {message && (
+        <p
+          role={message.ok ? 'status' : 'alert'}
+          className={message.ok ? 'text-sm text-chart-3' : 'text-sm text-destructive'}
+        >
+          {message.text}
+        </p>
+      )}
+    </div>
   )
 }
 
@@ -169,6 +238,18 @@ export function ProfilePage() {
         </CardHeader>
         <CardContent>
           <NameForm />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Benachrichtigungen</CardTitle>
+          <CardDescription>
+            In der App siehst du Neuigkeiten immer über die Glocke oben.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EmailPreference />
         </CardContent>
       </Card>
 

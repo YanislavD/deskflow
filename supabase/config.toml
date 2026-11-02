@@ -373,6 +373,11 @@ authorization_url_path = "/oauth/consent"
 # Allow dynamic client registration
 allow_dynamic_registration = false
 
+[functions.send-emails]
+# Ohne JWT erreichbar: Die Datenbank (pg_net) hat keinen Nutzer-Token. Geschützt ist die Funktion
+# stattdessen durch das gemeinsame Geheimnis im Header x-webhook-secret (siehe index.ts).
+verify_jwt = false
+
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
