@@ -43,10 +43,11 @@ jobs:
           version: latest
 
       # Startet eine lokale Supabase im Docker-Container (spielt dabei alle Migrationen und
-      # die Seed-Daten ein). Dienste, die für die Datenbank-Tests keine Rolle spielen, lassen
+      # die Seed-Daten ein). Der Storage-Dienst bleibt an: Die Anhang-Tests brauchen das Schema "storage".
+      # Dienste, die für die Datenbank-Tests keine Rolle spielen, lassen
       # wir weg, damit es schneller geht.
       - name: Supabase starten
-        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,realtime,storage-api,postgres-meta,supavisor
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,realtime,postgres-meta,supavisor
 
       - name: Tests ausführen
         run: supabase test db

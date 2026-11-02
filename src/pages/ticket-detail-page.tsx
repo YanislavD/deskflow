@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ArrowLeft, Lock, Pencil } from 'lucide-react'
+import { AttachmentsSection } from '@/components/attachments-section'
 import { CommentForm } from '@/components/comment-form'
 import { PriorityBadge, StatusBadge } from '@/components/ticket-badges'
 import { TicketControls } from '@/components/ticket-controls'
@@ -33,6 +34,7 @@ export function TicketDetailPage() {
     staff,
     categories,
     isStaff,
+    isAdmin,
     loading,
     error,
     addComment,
@@ -128,6 +130,12 @@ export function TicketDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <AttachmentsSection
+        ticketId={ticket.id}
+        organizationId={ticket.organization_id}
+        isAdmin={isAdmin}
+      />
 
       <section className="space-y-3">
         <h2 className="font-semibold">Kommentare</h2>

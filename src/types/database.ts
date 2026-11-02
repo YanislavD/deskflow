@@ -226,6 +226,58 @@ export type Database = {
           },
         ];
       };
+      ticket_attachments: {
+        Row: {
+          created_at: string;
+          file_name: string;
+          id: string;
+          mime_type: string;
+          organization_id: string;
+          size_bytes: number;
+          storage_path: string;
+          ticket_id: string;
+          uploaded_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          file_name: string;
+          id?: string;
+          mime_type: string;
+          organization_id: string;
+          size_bytes: number;
+          storage_path: string;
+          ticket_id: string;
+          uploaded_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          file_name?: string;
+          id?: string;
+          mime_type?: string;
+          organization_id?: string;
+          size_bytes?: number;
+          storage_path?: string;
+          ticket_id?: string;
+          uploaded_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "ticket_attachments_organization_id_ticket_id_fkey";
+            columns: ["organization_id", "ticket_id"];
+            isOneToOne: false;
+            referencedRelation: "tickets";
+            referencedColumns: ["organization_id", "id"];
+          },
+          {
+            foreignKeyName: "ticket_attachments_uploaded_by_fkey";
+            columns: ["uploaded_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       ticket_comments: {
         Row: {
           author_id: string | null;

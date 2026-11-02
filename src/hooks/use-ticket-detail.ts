@@ -62,6 +62,7 @@ type Bundle = {
   events: EventItem[]
   names: Record<string, string>
   isStaff: boolean
+  isAdmin: boolean
   staff: StaffMember[]
   categories: { id: string; name: string }[]
 }
@@ -107,6 +108,7 @@ async function fetchBundle(ticketId: string, userId: string): Promise<BundleResu
 
   const role = membershipRes.data?.role
   const isStaff = role === 'admin' || role === 'agent'
+  const isAdmin = role === 'admin'
   const events = eventsRes.data ?? []
 
   // Bei "assignee"- und "category"-Ereignissen stehen UUIDs in old_value/new_value
@@ -153,7 +155,16 @@ async function fetchBundle(ticketId: string, userId: string): Promise<BundleResu
   }
 
   return {
-    bundle: { ticket, comments: commentsRes.data ?? [], events, names, isStaff, staff, categories },
+    bundle: {
+      ticket,
+      comments: commentsRes.data ?? [],
+      events,
+      names,
+      isStaff,
+      isAdmin,
+      staff,
+      categories,
+    },
     error: null,
   }
 }
@@ -240,6 +251,7 @@ export function useTicketDetail(ticketId: string | undefined) {
     staff: bundle?.staff ?? [],
     categories: bundle?.categories ?? [],
     isStaff: bundle?.isStaff ?? false,
+    isAdmin: bundle?.isAdmin ?? false,
     loading,
     error,
     addComment,
