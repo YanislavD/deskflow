@@ -165,7 +165,7 @@ select lives_ok($$ update public.tickets set title = 'A1 umbenannt'
   'Titel ändern ist erlaubt');
 select is((select count(*)::int from public.ticket_events
            where ticket_id = 'e0000000-0000-4000-8000-000000000001'),
-          3, 'Trigger: Titeländerung erzeugt keinen Verlaufseintrag');
+          4, 'Trigger: auch die Titeländerung wird jetzt im Verlauf protokolliert');
 select throws_ok($$ update public.tickets set number = 99
                     where id = 'e0000000-0000-4000-8000-000000000001' $$,
   '42501', null, 'Ticketnummer ist unveränderlich');

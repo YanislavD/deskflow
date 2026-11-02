@@ -1,4 +1,4 @@
-import { formatDateTime } from '@/lib/format'
+import { formatDate, formatDateTime } from '@/lib/format'
 import { priorityLabels, statusLabels, type TicketPriority, type TicketStatus } from '@/lib/ticket-labels'
 import type { EventItem } from '@/hooks/use-ticket-detail'
 
@@ -19,6 +19,22 @@ function describe(event: EventItem, names: Record<string, string>) {
     const from = old_value ? (names[old_value] ?? 'Unbekannt') : 'niemand'
     const to = new_value ? (names[new_value] ?? 'Unbekannt') : 'niemand'
     return `hat die Zuständigkeit von „${from}“ auf „${to}“ geändert`
+  }
+  if (type === 'title') {
+    return `hat den Titel von „${old_value}“ auf „${new_value}“ geändert`
+  }
+  if (type === 'description') {
+    return 'hat die Beschreibung geändert'
+  }
+  if (type === 'category') {
+    const from = old_value ? (names[old_value] ?? 'gelöscht') : 'keine'
+    const to = new_value ? (names[new_value] ?? 'gelöscht') : 'keine'
+    return `hat die Kategorie von „${from}“ auf „${to}“ geändert`
+  }
+  if (type === 'due_at') {
+    const from = old_value ? formatDate(old_value) : 'keine'
+    const to = new_value ? formatDate(new_value) : 'keine'
+    return `hat die Fälligkeit von „${from}“ auf „${to}“ geändert`
   }
   return 'hat das Ticket geändert'
 }

@@ -108,21 +108,27 @@ async function fetchBundle(ticketId: string, userId: string): Promise<BundleResu
   const isStaff = role === 'admin' || role === 'agent'
   const events = eventsRes.data ?? []
 
-  // Bei "assignee"-Ereignissen stehen UUIDs in old_value/new_value -> Namen nachladen
-  const ids = new Set<string>()
+  // Bei "assignee"- und "category"-Ereignissen stehen UUIDs in old_value/new_value
+  // -> die Namen laden wir nach (ID -> Name in einer gemeinsamen Tabelle)
+  const personIds = new Set<string>()
+  const categoryIds = new Set<string>()
   for (const e of events) {
-    if (e.type !== 'assignee') continue
-    if (e.old_value) ids.add(e.old_value)
-    if (e.new_value) ids.add(e.new_value)
+    const target = e.type === 'assignee' ? personIds : e.type === 'category' ? categoryIds : null
+    if (!target) continue
+    if (e.old_value) target.add(e.old_value)
+    if (e.new_value) target.add(e.new_value)
   }
   const names: Record<string, string> = {}
-  if (ids.size > 0) {
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('id, full_name')
-      .in('id', [...ids])
-    for (const p of profiles ?? []) names[p.id] = p.full_name ?? 'Unbekannt'
-  }
+  const [people, cats] = await Promise.all([
+    personIds.size > 0
+      ? supabase.from('profiles').select('id, full_name').in('id', [...personIds])
+      : null,
+    categoryIds.size > 0
+      ? supabase.from('categories').select('id, name').in('id', [...categoryIds])
+      : null,
+  ])
+  for (const p of people?.data ?? []) names[p.id] = p.full_name ?? 'Unbekannt'
+  for (const c of cats?.data ?? []) names[c.id] = c.name
 
   // Auswahllisten für die Bearbeitung: Agents/Admins ("Zuständig") und Kategorien der Firma
   let staff: StaffMember[] = []
