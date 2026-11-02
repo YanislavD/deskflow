@@ -359,6 +359,7 @@ export type Database = {
         Returns: string;
       };
       create_organization: { Args: { org_name: string }; Returns: string };
+      ticket_stats: { Args: { org: string }; Returns: Json };
     };
     Enums: {
       member_role: "admin" | "agent" | "requester";

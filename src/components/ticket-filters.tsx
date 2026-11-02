@@ -25,6 +25,8 @@ export type TicketFilterValues = {
   status: TicketStatus | typeof ALL
   priority: TicketPriority | typeof ALL
   mine: boolean
+  unassigned: boolean
+  overdue: boolean
 }
 
 type Props = {
@@ -32,11 +34,32 @@ type Props = {
   onChange: (patch: Partial<TicketFilterValues>) => void
   onReset: () => void
   isActive: boolean
-  /** "Mir zugewiesen" gibt es nur für Agents/Admins (Requester sehen ohnehin nur ihre Tickets) */
-  showMine: boolean
+  /** "Mir zugewiesen"/"Nicht zugewiesen" gibt es nur für Agents/Admins (Requester sehen ohnehin nur ihre Tickets) */
+  isStaff: boolean
 }
 
-export function TicketFilters({ values, onChange, onReset, isActive, showMine }: Props) {
+function CheckFilter({
+  id,
+  label,
+  checked,
+  onChange,
+}: {
+  id: string
+  label: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  return (
+    <div className="flex items-center gap-2 px-1">
+      <Checkbox id={id} checked={checked} onCheckedChange={(c) => onChange(c === true)} />
+      <Label htmlFor={id} className="text-sm font-normal">
+        {label}
+      </Label>
+    </div>
+  )
+}
+
+export function TicketFilters({ values, onChange, onReset, isActive, isStaff }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="relative min-w-52 flex-1">
@@ -88,18 +111,28 @@ export function TicketFilters({ values, onChange, onReset, isActive, showMine }:
         </SelectContent>
       </Select>
 
-      {showMine && (
-        <div className="flex items-center gap-2 px-1">
-          <Checkbox
-            id="filter-mine"
-            checked={values.mine}
-            onCheckedChange={(checked) => onChange({ mine: checked === true })}
-          />
-          <Label htmlFor="filter-mine" className="text-sm font-normal">
-            Mir zugewiesen
-          </Label>
-        </div>
+      {isStaff && (
+        <CheckFilter
+          id="filter-mine"
+          label="Mir zugewiesen"
+          checked={values.mine}
+          onChange={(mine) => onChange({ mine })}
+        />
       )}
+      {isStaff && (
+        <CheckFilter
+          id="filter-unassigned"
+          label="Nicht zugewiesen"
+          checked={values.unassigned}
+          onChange={(unassigned) => onChange({ unassigned })}
+        />
+      )}
+      <CheckFilter
+        id="filter-overdue"
+        label="Überfällig"
+        checked={values.overdue}
+        onChange={(overdue) => onChange({ overdue })}
+      />
 
       {isActive && (
         <Button variant="ghost" size="sm" onClick={onReset}>

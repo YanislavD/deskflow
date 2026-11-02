@@ -45,6 +45,9 @@ export function AppHeader() {
           </Link>
           <nav className="flex items-center gap-4">
             <NavLink to="/" end className={navClass}>
+              Übersicht
+            </NavLink>
+            <NavLink to="/tickets" className={navClass}>
               Tickets
             </NavLink>
             {isAdmin && (

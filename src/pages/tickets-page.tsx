@@ -106,10 +106,17 @@ export function TicketsPage() {
       ? (priorityParam as TicketFilterValues['priority'])
       : ALL,
     mine: showMine && params.get('mine') === '1',
+    unassigned: showMine && params.get('unassigned') === '1',
+    overdue: params.get('overdue') === '1',
   }
   const page = Number.isInteger(pageParam) && pageParam > 0 ? pageParam : 1
   const isFiltering =
-    filters.q !== '' || filters.status !== ALL || filters.priority !== ALL || filters.mine
+    filters.q !== '' ||
+    filters.status !== ALL ||
+    filters.priority !== ALL ||
+    filters.mine ||
+    filters.unassigned ||
+    filters.overdue
 
   function writeParams(next: { filters: TicketFilterValues; sort: TicketSort; dir: string; page: number }) {
     const p = new URLSearchParams()
@@ -117,6 +124,8 @@ export function TicketsPage() {
     if (next.filters.status !== ALL) p.set('status', next.filters.status)
     if (next.filters.priority !== ALL) p.set('priority', next.filters.priority)
     if (next.filters.mine) p.set('mine', '1')
+    if (next.filters.unassigned) p.set('unassigned', '1')
+    if (next.filters.overdue) p.set('overdue', '1')
     if (next.sort !== 'number' || next.dir !== DEFAULT_DIR.number) {
       p.set('sort', next.sort)
       p.set('dir', next.dir)
@@ -147,11 +156,23 @@ export function TicketsPage() {
       status: filters.status === ALL ? null : filters.status,
       priority: filters.priority === ALL ? null : filters.priority,
       mine: filters.mine,
+      unassigned: filters.unassigned,
+      overdue: filters.overdue,
       sort,
       dir,
       page,
     }),
-    [debouncedQ, filters.status, filters.priority, filters.mine, sort, dir, page],
+    [
+      debouncedQ,
+      filters.status,
+      filters.priority,
+      filters.mine,
+      filters.unassigned,
+      filters.overdue,
+      sort,
+      dir,
+      page,
+    ],
   )
 
   const { tickets, total, loading, fetching, error } = useTickets(query)
@@ -193,7 +214,7 @@ export function TicketsPage() {
         onChange={updateFilters}
         onReset={() => setParams({}, { replace: true })}
         isActive={isFiltering}
-        showMine={showMine}
+        isStaff={showMine}
       />
 
       {loading && <p className="text-muted-foreground">Tickets werden geladen …</p>}

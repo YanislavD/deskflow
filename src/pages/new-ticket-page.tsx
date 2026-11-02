@@ -49,7 +49,7 @@ export function NewTicketPage() {
   return (
     <div className="space-y-6">
       <Link
-        to="/"
+        to="/tickets"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="size-4" aria-hidden /> Zurück zu den Tickets
@@ -134,7 +134,7 @@ export function NewTicketPage() {
               )}
 
               <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={() => navigate('/')}>
+                <Button type="button" variant="ghost" onClick={() => navigate('/tickets')}>
                   Abbrechen
                 </Button>
                 <Button type="submit" disabled={submitting || title.trim() === ''}>

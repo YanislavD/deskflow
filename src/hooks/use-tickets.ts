@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useMembership } from '@/hooks/use-membership'
+import { useRealtimeChanges } from '@/hooks/use-realtime'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import type { TicketPriority, TicketStatus } from '@/lib/ticket-labels'
@@ -14,6 +15,10 @@ export type TicketQuery = {
   priority: TicketPriority | null
   /** nur Tickets, die mir zugewiesen sind */
   mine: boolean
+  /** nur offene Tickets, deren Fälligkeit vorbei ist */
+  overdue: boolean
+  /** nur Tickets ohne Zuständigen */
+  unassigned: boolean
   sort: TicketSort
   dir: 'asc' | 'desc'
   /** 1-basiert */
@@ -57,8 +62,20 @@ export function useTickets(query: TicketQuery) {
   const { user } = useAuth()
   const userId = user?.id ?? null
   const [result, setResult] = useState<Result | null>(null)
+  // Wird bei jeder Änderung in der Datenbank erhöht -> die Liste lädt still neu
+  const [version, setVersion] = useState(0)
+
+  useRealtimeChanges(
+    {
+      table: 'tickets',
+      filter: organizationId ? `organization_id=eq.${organizationId}` : undefined,
+      enabled: organizationId !== null,
+    },
+    () => setVersion((v) => v + 1),
+  )
 
   // Ändert sich irgendein Parameter, ist das eine neue Anfrage
+  // (die "version" gehört bewusst NICHT dazu: Beim Neuladen bleiben die alten Zeilen stehen)
   const key = JSON.stringify([organizationId, userId, query])
 
   useEffect(() => {
@@ -76,6 +93,12 @@ export function useTickets(query: TicketQuery) {
     if (query.status) request = request.eq('status', query.status)
     if (query.priority) request = request.eq('priority', query.priority)
     if (query.mine && userId) request = request.eq('assignee_id', userId)
+    if (query.unassigned) request = request.is('assignee_id', null)
+    if (query.overdue) {
+      request = request
+        .lt('due_at', new Date().toISOString())
+        .not('status', 'in', '(geloest,geschlossen)')
+    }
 
     const term = sanitizeSearch(query.q)
     if (term) {
@@ -114,7 +137,7 @@ export function useTickets(query: TicketQuery) {
     return () => {
       cancelled = true
     }
-  }, [organizationId, userId, key, query])
+  }, [organizationId, userId, key, query, version])
 
   // Antworten einer anderen Firma gelten nicht
   const data = result?.organizationId === organizationId ? result : null

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useRealtimeChanges } from '@/hooks/use-realtime'
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
 import type { TicketPriority, TicketStatus } from '@/lib/ticket-labels'
@@ -187,6 +188,17 @@ export function useTicketDetail(ticketId: string | undefined) {
     setBundle(result.bundle)
     setError(result.error)
   }, [ticketId, user])
+
+  // Realtime: Kommentare, Verlauf und das Ticket selbst aktualisieren sich, sobald jemand
+  // anderes etwas ändert. Welche Zeilen wir bekommen, bestimmt die RLS (z. B. keine internen
+  // Kommentare für Requester).
+  const byTicket = ticketId ? `ticket_id=eq.${ticketId}` : undefined
+  useRealtimeChanges({ table: 'ticket_comments', filter: byTicket, enabled: !!ticketId }, refresh)
+  useRealtimeChanges({ table: 'ticket_events', filter: byTicket, enabled: !!ticketId }, refresh)
+  useRealtimeChanges(
+    { table: 'tickets', filter: ticketId ? `id=eq.${ticketId}` : undefined, enabled: !!ticketId },
+    refresh,
+  )
 
   /** Schreibt einen Kommentar; gibt eine Fehlermeldung zurück oder null bei Erfolg. */
   async function addComment(body: string, isInternal: boolean) {

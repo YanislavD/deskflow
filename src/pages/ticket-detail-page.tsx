@@ -41,7 +41,7 @@ export function TicketDetailPage() {
 
   const backLink = (
     <Link
-      to="/"
+      to="/tickets"
       className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="size-4" aria-hidden /> Zurück zu den Tickets

@@ -29,6 +29,22 @@ export const statusStyles: Record<TicketStatus, string> = {
   geschlossen: 'bg-muted text-muted-foreground',
 }
 
+// Volle Farben für die Balken im Dashboard
+export const statusBarColors: Record<TicketStatus, string> = {
+  neu: 'bg-chart-1',
+  in_bearbeitung: 'bg-chart-2',
+  wartet: 'bg-chart-4',
+  geloest: 'bg-chart-3',
+  geschlossen: 'bg-muted-foreground/50',
+}
+
+export const priorityBarColors: Record<TicketPriority, string> = {
+  niedrig: 'bg-muted-foreground/50',
+  mittel: 'bg-chart-2',
+  hoch: 'bg-chart-4',
+  kritisch: 'bg-chart-5',
+}
+
 export const priorityStyles: Record<TicketPriority, string> = {
   niedrig: 'bg-muted text-muted-foreground',
   mittel: 'bg-chart-2/15 text-chart-2',

@@ -13,6 +13,10 @@ Jede Firma (Organisation) hat ihre eigenen Nutzer, Kategorien und Tickets – un
 | `agent`     | alle Tickets der Firma ansehen und bearbeiten, interne Notizen schreiben              |
 | `admin`     | wie `agent` + Kategorien und Mitglieder verwalten, Tickets löschen, Firma umbenennen  |
 
+Die Startseite zeigt eine **Übersicht** (offene, überfällige und zugewiesene Tickets, Verteilung nach Status und
+Priorität). Übersicht, Ticketliste und Ticketdetails aktualisieren sich per **Realtime** automatisch, wenn jemand
+anderes etwas ändert – ohne die Seite neu zu laden. Welche Änderungen man bekommt, bestimmt weiterhin die RLS.
+
 Eine Person kann Mitglied in mehreren Firmen sein (mit je eigener Rolle). Die aktive Firma wählt man oben im
 Kopfbereich; Tickets, „Neues Ticket“ und „Verwaltung“ arbeiten immer nur mit der gewählten Firma.
 
