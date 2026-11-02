@@ -71,6 +71,8 @@ npx supabase db reset    # spielt Migrationen und supabase/seed.sql ein
 npx supabase test db     # führt die RLS-Tests aus
 ```
 
+E-Mails (z. B. „Passwort vergessen“) landen lokal nicht im Postfach, sondern in **Mailpit**: http://127.0.0.1:54324
+
 Die Demo-Daten (`supabase/seed.sql`) enthalten die Firma „Müller & Partner GmbH“ mit einem Admin,
 einem Agent und zwei Requestern sowie 8 Tickets. Die Logins und das Test-Passwort stehen oben in der Seed-Datei.
 **Der Seed ist nur für die lokale Entwicklung gedacht** – nicht gegen ein echtes Projekt ausführen.

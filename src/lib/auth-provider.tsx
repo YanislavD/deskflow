@@ -8,6 +8,9 @@ function translateAuthError(message: string) {
   if (message === 'Email not confirmed') return 'Bitte bestätige zuerst deine E-Mail-Adresse.'
   if (message === 'User already registered') return 'Mit dieser E-Mail-Adresse gibt es schon ein Konto.'
   if (message.startsWith('Password should be')) return 'Das Passwort ist zu kurz oder zu schwach.'
+  if (message.includes('should be different')) return 'Das neue Passwort muss sich vom alten unterscheiden.'
+  if (message.includes('rate limit') || message.includes('security purposes'))
+    return 'Zu viele Versuche. Bitte warte einen Moment und versuche es erneut.'
   return 'Das hat nicht geklappt. Bitte versuche es erneut.'
 }
 
@@ -50,6 +53,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Ohne Sitzung ist E-Mail-Bestätigung eingeschaltet (in der Cloud der Standard)
           needsConfirmation: !error && !data.session,
         }
+      },
+      sendPasswordReset: async (email) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        })
+        return { error: error ? translateAuthError(error.message) : null }
+      },
+      updatePassword: async (password) => {
+        const { error } = await supabase.auth.updateUser({ password })
+        return { error: error ? translateAuthError(error.message) : null }
       },
       signOut: async () => {
         await supabase.auth.signOut()

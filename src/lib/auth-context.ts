@@ -13,6 +13,10 @@ export type AuthContextValue = {
     email: string,
     password: string,
   ) => Promise<{ error: string | null; needsConfirmation: boolean }>
+  /** Schickt eine E-Mail mit Link zum Zurücksetzen des Passworts */
+  sendPasswordReset: (email: string) => Promise<{ error: string | null }>
+  /** Setzt ein neues Passwort für den gerade angemeldeten Nutzer (nach dem Klick auf den Link) */
+  updatePassword: (password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
 }
 

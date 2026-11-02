@@ -4,10 +4,12 @@ import { RequireAdmin } from '@/components/require-admin'
 import { RequireAuth } from '@/components/require-auth'
 import { RequireMembership } from '@/components/require-membership'
 import { AdminPage } from '@/pages/admin-page'
+import { ForgotPasswordPage } from '@/pages/forgot-password-page'
 import { LoginPage } from '@/pages/login-page'
 import { NewTicketPage } from '@/pages/new-ticket-page'
 import { OnboardingPage } from '@/pages/onboarding-page'
 import { RegisterPage } from '@/pages/register-page'
+import { ResetPasswordPage } from '@/pages/reset-password-page'
 import { TicketDetailPage } from '@/pages/ticket-detail-page'
 import { TicketsPage } from '@/pages/tickets-page'
 
@@ -16,6 +18,8 @@ function App() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       {/* Ab hier nur angemeldet */}
       <Route element={<RequireAuth />}>
