@@ -77,6 +77,13 @@ Die Demo-Daten (`supabase/seed.sql`) enthalten die Firma „Müller & Partner Gm
 einem Agent und zwei Requestern sowie 8 Tickets. Die Logins und das Test-Passwort stehen oben in der Seed-Datei.
 **Der Seed ist nur für die lokale Entwicklung gedacht** – nicht gegen ein echtes Projekt ausführen.
 
+## Continuous Integration
+
+`.github/workflows/ci.yml` läuft bei jedem Push und Pull Request auf GitHub:
+
+- **Lint und Build** des Frontends
+- **Datenbank-Tests (pgTAP)** gegen eine lokale Supabase im Container (`supabase test db`)
+
 ## Skripte
 
 | Befehl            | Beschreibung                  |

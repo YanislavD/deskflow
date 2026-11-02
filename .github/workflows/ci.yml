@@ -1,0 +1,52 @@
+name: CI
+
+# Läuft bei jedem Push und jedem Pull Request.
+on:
+  push:
+  pull_request:
+
+# Ein neuer Push bricht den noch laufenden Durchlauf desselben Branches ab.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Lint und Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run lint
+
+      # Der Build braucht die Supabase-Werte nur zum Starten der App, nicht zum Kompilieren.
+      # Platzhalter reichen hier – echte Schlüssel gehören nie ins Repo.
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: ci-placeholder
+
+  database:
+    name: Datenbank-Tests (pgTAP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      # Startet eine lokale Supabase im Docker-Container (spielt dabei alle Migrationen und
+      # die Seed-Daten ein). Dienste, die für die Datenbank-Tests keine Rolle spielen, lassen
+      # wir weg, damit es schneller geht.
+      - name: Supabase starten
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,mailpit,realtime,storage-api,postgres-meta,supavisor
+
+      - name: Tests ausführen
+        run: supabase test db
