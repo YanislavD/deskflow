@@ -30,9 +30,12 @@ insert into public.tickets (id, organization_id, title, requester_id, assignee_i
   ('d3000000-0000-4000-8000-000000000001', 'd2000000-0000-4000-8000-00000000000a', 'Drucker kaputt',
    'd1000000-0000-4000-8000-0000000000a2', 'd1000000-0000-4000-8000-0000000000a1');
 
--- Der Test soll nicht von lokalen Einstellungen (Seed) abhängen: erst leeren, dann setzen.
+-- Der Test soll nicht von vorhandenen Daten abhängen (Einstellungen, Warteschlange und Benachrichtigungen
+-- können aus dem Seed oder früheren Läufen stammen): erst leeren, dann setzen.
 -- (Alles wird am Ende zurückgerollt; auch die Anfragen von pg_net gehen erst beim Commit raus.)
 delete from private.app_settings;
+delete from public.email_outbox;
+delete from public.notifications;
 insert into private.app_settings values ('app_url', 'https://app.example');
 
 -- Standard: E-Mails sind eingeschaltet

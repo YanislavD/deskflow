@@ -45,7 +45,8 @@ insert into public.tickets (id, organization_id, title, requester_id, assignee_i
    'b1000000-0000-4000-8000-0000000000a3', 'b1000000-0000-4000-8000-0000000000a1');
 
 -- Der Anfang ist leer (Anlegen und Zuweisen per SQL erzeugt keine Benachrichtigung)
-select is((select count(*)::int from public.notifications), 0, 'am Anfang gibt es keine Benachrichtigungen');
+select is((select count(*)::int from public.notifications where organization_id = 'b2000000-0000-4000-8000-00000000000a'), 0,
+          'am Anfang gibt es in dieser Firma keine Benachrichtigungen');
 
 -- Kommentar des Anfragenden -> Zuständiger wird benachrichtigt ----------------------------------
 

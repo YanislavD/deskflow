@@ -164,6 +164,13 @@ insert into public.ticket_comments (ticket_id, organization_id, author_id, body,
    'Passwort wurde zurückgesetzt, das temporäre Passwort habe ich dir per Telefon durchgegeben.',
    false, now() - interval '1 day');
 
+-- Aufräumen: Die Trigger haben beim Einspielen der Demo-Daten Benachrichtigungen und E-Mails
+-- erzeugt (jede Statusänderung und jeder Kommentar oben löst welche aus). Die wollen wir nicht:
+-- Nach einem `supabase db reset` sollen die Glocke leer und die E-Mail-Warteschlange leer sein,
+-- sonst würden sofort Dutzende alte E-Mails verschickt.
+delete from public.email_outbox;
+delete from public.notifications;
+
 -- E-Mail-Benachrichtigungen (nur lokal) ---------------------------------------------------------------------
 -- Wohin die Datenbank die Edge Function "send-emails" ruft (Docker-Containername, siehe README)
 -- und welche Adresse die App in den E-Mails verlinkt. Das Geheimnis muss mit
